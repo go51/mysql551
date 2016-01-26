@@ -39,3 +39,42 @@ func BenchmarkNew(b *testing.B) {
 		_ = mysql551.New(config)
 	}
 }
+
+func TestOpenClose(t *testing.T) {
+	config := &mysql551.Config{
+		Host:"tcp(localhost:3306)",
+		User:"root",
+		Password:"",
+		Database:"mysql551_test",
+	}
+
+	m := mysql551.New(config)
+
+	m.Open()
+	if !m.IsOpen() {
+		t.Errorf("データベースとの接続に失敗しました。\nResult: %v\n", m.IsOpen())
+	}
+	m.Close()
+	if m.IsOpen() {
+		t.Errorf("データベースとの切断に失敗しました。\nResult: %v\n", m.IsOpen())
+	}
+
+}
+
+func BenchmarkOpenClose(b *testing.B) {
+	b.SkipNow()
+	config := &mysql551.Config{
+		Host:"tcp(localhost:3306)",
+		User:"root",
+		Password:"",
+		Database:"mysql551_test",
+	}
+
+	m := mysql551.New(config)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		m.Open()
+		m.Close()
+	}
+}
