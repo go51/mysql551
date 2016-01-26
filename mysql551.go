@@ -1,14 +1,15 @@
 package mysql551
+
 import (
-	_ "github.com/go-sql-driver/mysql"
 	"database/sql"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 type Mysql struct {
 	config *Config
 	db     *sql.DB
 
-	open   bool
+	open bool
 }
 
 type Config struct {
@@ -20,8 +21,8 @@ type Config struct {
 
 func New(config *Config) *Mysql {
 	m := Mysql{
-		config:config,
-		open:false,
+		config: config,
+		open:   false,
 	}
 
 	return &m
@@ -63,4 +64,14 @@ func (m *Mysql) IsOpen() bool {
 	}
 
 	return true
+}
+
+func (m *Mysql) Query(query string, param ...interface{}) *sql.Rows {
+	rows, err := m.db.Query(query, param...)
+	if err != nil {
+		panic(err)
+	}
+
+	return rows
+
 }
