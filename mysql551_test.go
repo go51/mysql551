@@ -1,15 +1,16 @@
 package mysql551_test
+
 import (
-	"testing"
 	"github.com/go51/mysql551"
+	"testing"
 )
 
 func TestNew(t *testing.T) {
 	config := &mysql551.Config{
-		Host:"localhost",
-		User:"root",
-		Password:"",
-		Database:"mysql551_test",
+		Host:     "localhost",
+		User:     "root",
+		Password: "",
+		Database: "mysql551_test",
 	}
 
 	m1 := mysql551.New(config)
@@ -28,10 +29,10 @@ func TestNew(t *testing.T) {
 
 func BenchmarkNew(b *testing.B) {
 	config := &mysql551.Config{
-		Host:"localhost",
-		User:"root",
-		Password:"",
-		Database:"mysql551_test",
+		Host:     "localhost",
+		User:     "root",
+		Password: "",
+		Database: "mysql551_test",
 	}
 
 	b.ResetTimer()
@@ -42,10 +43,10 @@ func BenchmarkNew(b *testing.B) {
 
 func TestOpenClose(t *testing.T) {
 	config := &mysql551.Config{
-		Host:"tcp(localhost:3306)",
-		User:"root",
-		Password:"",
-		Database:"mysql551_test",
+		Host:     "tcp(localhost:3306)",
+		User:     "root",
+		Password: "",
+		Database: "mysql551_test",
 	}
 
 	m := mysql551.New(config)
@@ -64,10 +65,10 @@ func TestOpenClose(t *testing.T) {
 func BenchmarkOpenClose(b *testing.B) {
 	b.SkipNow()
 	config := &mysql551.Config{
-		Host:"tcp(localhost:3306)",
-		User:"root",
-		Password:"",
-		Database:"mysql551_test",
+		Host:     "tcp(localhost:3306)",
+		User:     "root",
+		Password: "",
+		Database: "mysql551_test",
 	}
 
 	m := mysql551.New(config)
@@ -77,4 +78,43 @@ func BenchmarkOpenClose(b *testing.B) {
 		m.Open()
 		m.Close()
 	}
+}
+
+type sample struct {
+	id          int64
+	name        string
+	description string
+}
+
+func TestQuery(t *testing.T) {
+	config := &mysql551.Config{
+		Host:     "tcp(localhost:3306)",
+		User:     "root",
+		Password: "",
+		Database: "mysql551_test",
+	}
+
+	m := mysql551.New(config)
+
+	m.Open()
+	defer m.Close()
+
+	sqlAll := "select id, name, description from sample_table"
+	rows := m.Query(sqlAll)
+	defer rows.Close()
+
+	i := 0
+	for rows.Next() {
+		s := sample{}
+		err := rows.Scan(&s.id, &s.name, &s.description)
+		if err != nil {
+			t.Errorf("クエリ実行が失敗しました。\nResult: %d件", i)
+		}
+		i++
+	}
+
+	if i != 5 {
+		t.Errorf("クエリ実行が失敗しました。\nResult: %d件", i)
+	}
+
 }
