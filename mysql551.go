@@ -8,8 +8,10 @@ import (
 type Mysql struct {
 	config *Config
 	db     *sql.DB
+	tx     *sql.Tx
 
 	open bool
+	tran bool
 }
 
 type Config struct {
@@ -66,8 +68,73 @@ func (m *Mysql) IsOpen() bool {
 	return true
 }
 
+func (m *Mysql) Begin() {
+	if m.IsTransaction() {
+		return
+	}
+
+	tx, err := m.db.Begin()
+	if err != nil {
+		panic(err)
+	}
+
+	m.tx = tx
+	m.tran = true
+}
+
+func (m *Mysql) Commit() {
+	if !m.IsTransaction() {
+		return
+	}
+
+	err := m.tx.Commit()
+	if err != nil {
+		panic(err)
+	}
+
+	m.tx = nil
+	m.tran = false
+
+}
+
+func (m *Mysql) Rollback() {
+	if !m.IsTransaction() {
+		return
+	}
+
+	err := m.tx.Rollback()
+	if err != nil {
+		panic(err)
+	}
+
+	m.tx = nil
+	m.tran = false
+
+}
+
+func (m *Mysql) IsTransaction() bool {
+	if !m.tran {
+		return false
+	}
+
+	if m.tx == nil {
+		return false
+	}
+
+	return true
+}
+
 func (m *Mysql) Query(query string, param ...interface{}) *sql.Rows {
-	rows, err := m.db.Query(query, param...)
+
+	var rows *sql.Rows = nil
+	var err error = nil
+
+	if m.IsTransaction() {
+		rows, err = m.tx.Query(query, param...)
+	} else {
+		rows, err = m.db.Query(query, param...)
+	}
+
 	if err != nil {
 		panic(err)
 	}
@@ -77,7 +144,15 @@ func (m *Mysql) Query(query string, param ...interface{}) *sql.Rows {
 }
 
 func (m *Mysql) Exec(query string, param ...interface{}) (rowsAffected int64, lastInsertId int64) {
-	res, err := m.db.Exec(query, param...)
+	var res sql.Result = nil
+	var err error = nil
+
+	if m.IsTransaction() {
+		res, err = m.tx.Exec(query, param...)
+	} else {
+		res, err = m.db.Exec(query, param...)
+	}
+
 	if err != nil {
 		panic(err)
 	}
