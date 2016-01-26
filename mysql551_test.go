@@ -118,3 +118,27 @@ func TestQuery(t *testing.T) {
 	}
 
 }
+
+func TestExecInsert(t *testing.T) {
+	config := &mysql551.Config{
+		Host:     "tcp(localhost:3306)",
+		User:     "root",
+		Password: "",
+		Database: "mysql551_test",
+	}
+
+	m := mysql551.New(config)
+
+	m.Open()
+	defer m.Close()
+
+	insert := "insert into sample_table_cud (name, description) values (?, ?)"
+	affected, id := m.Exec(insert, "okumura", "test")
+
+	if affected != 1 {
+		t.Errorf("クエリ実行が失敗しました。\nAffected: %d", affected)
+	}
+	if id < 1 {
+		t.Errorf("クエリ実行が失敗しました。\nId: %d", id)
+	}
+}
