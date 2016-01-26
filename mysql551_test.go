@@ -33,6 +33,8 @@ func initialize() {
 	_, _ = m.Exec(sql)
 	sql = "truncate table sample_table_cud"
 	_, _ = m.Exec(sql)
+	sql = "truncate table sample_table_tran"
+	_, _ = m.Exec(sql)
 
 	// Insert
 	sql = "insert into sample_table (name, description) values (?, ?)"
@@ -270,4 +272,96 @@ func TestExecUpdate(t *testing.T) {
 			t.Errorf("クエリ実行に失敗しました。")
 		}
 	}
+}
+
+func TestTransaction(t *testing.T) {
+	config := &mysql551.Config{
+		Host:     "tcp(localhost:3306)",
+		User:     "root",
+		Password: "",
+		Database: "mysql551_test",
+	}
+
+	m := mysql551.New(config)
+	m2 := mysql551.New(config)
+
+	m.Open()
+	defer m.Close()
+	m2.Open()
+	defer m2.Close()
+
+	m.Begin()
+
+	if !m.IsTransaction() {
+		t.Errorf("トランザクションを実施しているはず。")
+	}
+	if m2.IsTransaction() {
+		t.Errorf("トランザクションを実施していないはず。")
+	}
+
+	insert := "insert into sample_table_tran (name, description) values (?, ?)"
+	_, _ = m.Exec(insert, "pubapp.biz", "domain")
+
+	var cnt int64 = 0
+
+	sql := "select count(*) as cnt from sample_table_tran"
+	rows := m.Query(sql)
+	if rows.Next() {
+		rows.Scan(&cnt)
+	}
+	rows.Close()
+
+	if cnt != 1 {
+		t.Errorf("トランザクション中のクエリ実行に失敗しました。")
+	}
+
+	rows = m2.Query(sql)
+	if rows.Next() {
+		rows.Scan(&cnt)
+	}
+	rows.Close()
+
+	if cnt != 0 {
+		t.Errorf("トランザクション中のクエリ実行に失敗しました。\nCount: %d", cnt)
+	}
+
+	m.Commit()
+
+	rows = m2.Query(sql)
+	if rows.Next() {
+		rows.Scan(&cnt)
+	}
+	rows.Close()
+
+	if cnt != 1 {
+		t.Errorf("トランザクション中のクエリ実行に失敗しました。\nCount: %d", cnt)
+	}
+
+	m.Begin()
+
+	delete := "delete from sample_table_tran"
+	_, _ = m.Exec(delete)
+
+	rows = m.Query(sql)
+	if rows.Next() {
+		rows.Scan(&cnt)
+	}
+	rows.Close()
+
+	if cnt != 0 {
+		t.Errorf("トランザクション中のクエリ実行に失敗しました。")
+	}
+
+	m.Rollback()
+
+	rows = m.Query(sql)
+	if rows.Next() {
+		rows.Scan(&cnt)
+	}
+	rows.Close()
+
+	if cnt != 1 {
+		t.Errorf("トランザクション中のクエリ実行に失敗しました。")
+	}
+
 }
