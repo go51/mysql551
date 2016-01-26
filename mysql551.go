@@ -75,3 +75,21 @@ func (m *Mysql) Query(query string, param ...interface{}) *sql.Rows {
 	return rows
 
 }
+
+func (m *Mysql) Exec(query string, param ...interface{}) (rowsAffected int64, lastInsertId int64) {
+	res, err := m.db.Exec(query, param...)
+	if err != nil {
+		panic(err)
+	}
+
+	lastInsertId, err = res.LastInsertId()
+	if err != nil {
+		panic(err)
+	}
+	rowsAffected, err = res.RowsAffected()
+	if err != nil {
+		panic(err)
+	}
+
+	return
+}
