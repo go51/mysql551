@@ -2,6 +2,7 @@ package mysql551
 
 import (
 	"database/sql"
+	"errors"
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -69,6 +70,10 @@ func (m *Mysql) IsOpen() bool {
 }
 
 func (m *Mysql) Begin() {
+	if !m.IsOpen() {
+		panic(errors.New("[mysql555]It is not connected to the host"))
+	}
+
 	if m.IsTransaction() {
 		return
 	}
@@ -83,6 +88,10 @@ func (m *Mysql) Begin() {
 }
 
 func (m *Mysql) Commit() {
+	if !m.IsOpen() {
+		panic(errors.New("[mysql555]It is not connected to the host"))
+	}
+
 	if !m.IsTransaction() {
 		return
 	}
@@ -98,6 +107,10 @@ func (m *Mysql) Commit() {
 }
 
 func (m *Mysql) Rollback() {
+	if !m.IsOpen() {
+		panic(errors.New("[mysql555]It is not connected to the host"))
+	}
+
 	if !m.IsTransaction() {
 		return
 	}
@@ -125,6 +138,9 @@ func (m *Mysql) IsTransaction() bool {
 }
 
 func (m *Mysql) Query(query string, param ...interface{}) *sql.Rows {
+	if !m.IsOpen() {
+		panic(errors.New("[mysql555]It is not connected to the host"))
+	}
 
 	var rows *sql.Rows = nil
 	var err error = nil
@@ -144,6 +160,10 @@ func (m *Mysql) Query(query string, param ...interface{}) *sql.Rows {
 }
 
 func (m *Mysql) Exec(query string, param ...interface{}) (rowsAffected int64, lastInsertId int64) {
+	if !m.IsOpen() {
+		panic(errors.New("[mysql555]It is not connected to the host"))
+	}
+
 	var res sql.Result = nil
 	var err error = nil
 
