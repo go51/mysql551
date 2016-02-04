@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	_ "github.com/go-sql-driver/mysql"
+	"time"
 )
 
 type Mysql struct {
@@ -187,4 +188,35 @@ func (m *Mysql) Exec(query string, param ...interface{}) (rowsAffected int64, la
 	}
 
 	return
+}
+
+var nilTime time.Time = time.Time{}
+var nilString string = ""
+var nilInt64 int64 = 0
+
+func ToNil(value interface{}) interface{} {
+	if val, ok := value.(string); ok {
+		// String
+		if val == nilString {
+			return nil
+		} else {
+			return value
+		}
+	} else if val, ok := value.(int64); ok {
+		// Int64
+		if val == nilInt64 {
+			return nil
+		} else {
+			return value
+		}
+	} else if val, ok := value.(time.Time); ok {
+		// time.Time
+		if val == nilTime {
+			return nil
+		} else {
+			return value
+		}
+	} else {
+		return value
+	}
 }
