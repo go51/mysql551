@@ -3,6 +3,7 @@ package mysql551
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"time"
 )
@@ -153,7 +154,9 @@ func (m *Mysql) Query(query string, param ...interface{}) *sql.Rows {
 	}
 
 	if err != nil {
-		panic(err)
+		message := err.Error()
+		message = message + "\n" + "[ SQL ] " + query + "\n" + fmt.Sprintf("[ PRM ] %#v\n", param)
+		panic(errors.New(message))
 	}
 
 	return rows
@@ -175,7 +178,9 @@ func (m *Mysql) Exec(query string, param ...interface{}) (rowsAffected int64, la
 	}
 
 	if err != nil {
-		panic(err)
+		message := err.Error()
+		message = message + "\n" + "[ SQL ] " + query + "\n" + fmt.Sprintf("[ PRM ] %#v\n", param)
+		panic(errors.New(message))
 	}
 
 	lastInsertId, err = res.LastInsertId()
@@ -220,3 +225,7 @@ func ToNil(value interface{}) interface{} {
 		return value
 	}
 }
+
+type GString string
+type GTime time.Time
+type GInt64 int64
